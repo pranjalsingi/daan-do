@@ -21,18 +21,9 @@ contract NGO {
 
 }
 
-// Charity[] charities = Charity.getCharities()
-
 contract Charity is NGO {
 
     event newDonor(address _address, uint amount);
-    
-    //uint intervalTime;
-    
-    struct AddressAmount {
-        address _address;
-        uint amount;
-    }
     
     struct Interval {
         uint total_amount;
@@ -78,7 +69,7 @@ contract Charity is NGO {
         return intervals[intervals.length - 1].amounts;
     }
     
-    function donationByAddress() external view returns (Interval[] memory){
+    function allIntervals() external view returns (Interval[] memory){
         return intervals;
     }
     
@@ -101,11 +92,9 @@ contract Charity is NGO {
         for(uint i = 0; i < ngos.length; i++){
             if (i > (ngos.length - 2)){
                 depositToNGO(ngos[i], address(this).balance);
-                // payable(ngos[i]).transfer(eachCut);
             }
             else{
                 depositToNGO(ngos[i], eachCut);
-                // payable(ngos[i]).transfer(eachCut);
             }  
         }
         intervalDist.endTime = block.timestamp;
