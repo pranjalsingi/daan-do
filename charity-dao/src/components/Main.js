@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
+import { Button } from 'react-bootstrap';
 
 import 'bootstrap/dist/css/bootstrap.css';
 
 import * as constants from "../constants";
+import DonateEtherForm from "./Forms";
 
 import OpenCharity from "../abis/OpenCharity.json";
-import { getCharities } from "../utils";
+import { getCharities, getContractBalance, getIntervalStart, getLeaderboard, deposit, distribute } from "../utils";
 
 class App extends Component {
     componentWillMount() {
@@ -14,32 +16,101 @@ class App extends Component {
   
     async loadBlockchainData() {
       const charities = await getCharities(constants.OPEN_CHARITY_ADDR, OpenCharity);
-      this.setState({ charities: charities })
+      const contractCurrentBalance = await getContractBalance(constants.OPEN_CHARITY_ADDR, OpenCharity);
+      const intervalStart = await getIntervalStart(constants.OPEN_CHARITY_ADDR, OpenCharity);
+      const leaderboard = await getLeaderboard(constants.OPEN_CHARITY_ADDR, OpenCharity);
+    //   const depositReceipt = await deposit(constants.OPEN_CHARITY_ADDR, OpenCharity, '100.34534');
+    //   const distributeReceipt = await distribute(constants.OPEN_CHARITY_ADDR, OpenCharity);
+      this.setState({
+          charities: charities,
+          contractCurrentBalance: contractCurrentBalance,
+          leaderboard: leaderboard
+     })
     }
-  
+
+    async distributeEther(e) {
+        const distributeReceipt = await distribute(constants.OPEN_CHARITY_ADDR, OpenCharity);
+    }
+
     constructor(props) {
       super(props)
-      this.state = { charities: [] }
+      this.state = {
+          charities: [],
+          contractCurrentBalance: null,
+          leaderboard: null
+        }
     }
-  
+
     render() {
         let rows = [];
         for (let i in this.state.charities) {
-            rows.push(<tr key={i}><td key={i}>{this.state.charities[i]}</td></tr>)
+            rows.push(
+                <tr key={this.state.charities[i][0]}>
+                    <td>{this.state.charities[i][0]}</td>
+                    <td>{this.state.charities[i][1]}</td>
+                </tr>
+            )
+        }
+
+        let leaderRows = [];
+        for (let i in this.state.leaderboard) {
+            leaderRows.push(
+                <tr key={this.state.leaderboard[i][0]}>
+                    <td>{this.state.leaderboard[i][0]}</td>
+                    <td>{this.state.leaderboard[i][1]}</td>
+                </tr>
+            )
         }
 
         return (
         <div className="container">
-            <table striped bordered hover size="sm">
-                <thead>
-                    <tr>
-                        <th>Charity Addresses</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows}
-                </tbody>
-            </table>
+            <div className="row">
+            <div className="col-6">
+                    <h3>Charities</h3>
+                    <table className="table">
+                        <thead>
+                            <tr>
+                                <th>Address</th>
+                                <th>Amount Received</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rows}
+                        </tbody>
+                    </table>
+                </div>
+                <div className="col-6">
+                    <h3>LeaderBoard</h3>
+                    <table className="table">
+                        <thead>
+                            <tr>
+                                <th>Address</th>
+                                <th>Amount Donated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {leaderRows}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div className="row mt-5">
+                <div className="col-6">
+                <DonateEtherForm />
+                </div>
+                <div className="col-6">
+                    <h3>Smart Contract Balance: {this.state.contractCurrentBalance}</h3>
+                </div>
+            </div>
+            <div className="row mt-5">
+                <div className="col-6">
+                    <h3>Distribute Funds</h3>
+                    <Button variant="primary" onClick={this.distributeEther}>Distribute Funds</Button>
+                </div>
+                {/* <div className="col-6">
+                    <h3>Smart Contract Balance: {this.state.contractCurrentBalance}</h3>
+                </div> */}
+            </div>
         </div>
         );
     }
