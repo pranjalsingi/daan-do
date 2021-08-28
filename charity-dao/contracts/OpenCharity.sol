@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.7;
+pragma solidity ^0.8.0;
 
 contract NGO {
 
@@ -21,7 +21,7 @@ contract NGO {
 
 }
 
-contract Charity is NGO {
+contract OpenCharity is NGO {
 
     event newDonor(address _address, uint amount);
     
@@ -108,7 +108,7 @@ contract Charity is NGO {
 
 
 
-// Done - Accept payment from an address to the Charity contract 
+// Done - Accept payment from an address to the OpenCharity contract 
 
 // Done - Smart contract should increase the total balance by the amount received for that interval
 // Done - An event should be fired when someone makes a payment(Front can listen to this event and update the UI accordingly)
