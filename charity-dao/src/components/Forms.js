@@ -6,7 +6,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import * as constants from "../constants";
 
 import OpenCharity from "../abis/OpenCharity.json";
-import { deposit } from "../utils";
+import { deposit, distribute } from "../utils";
 
 class DonateEtherForm extends Component {
 
@@ -25,8 +25,23 @@ class DonateEtherForm extends Component {
 
 
     async donateEther(e) {
+        if(Number(this.state.amount) === 0.0){
+            alert('Amount should be great than 0');
+            return;
+        }
         const depositReceipt = await deposit(constants.OPEN_CHARITY_ADDR, OpenCharity, this.state.amount);
         this.setState({'amount': ''});
+    }
+
+    async distributeEther(e) {
+        try{
+            const distributeReceipt = await distribute(constants.OPEN_CHARITY_ADDR, OpenCharity);
+        }
+        catch(err){
+            let index_of_single = err.data.message.search("'");
+            alert(err.data.message.slice(index_of_single+1, err.data.message.length-1));
+            console.log(err);
+        }
     }
 
     render() {
@@ -37,14 +52,13 @@ class DonateEtherForm extends Component {
                     <Form>
                         <Form.Group className="mb-2">
                             {/* <Form.Label>Enter Ether Amount</Form.Label> */}
-                            <h3>Enter Ether Amount</h3>
-                            <Form.Control type="text" placeholder="Example: 3.456" value={this.state.amount} onChange={this.handleAmountChange}/>
-                            <Form.Text className="text-muted">
-                            We'll never share your ether with anyone else. We will just keep it.
-                            </Form.Text>
+                            <h3>Enter Donation Amount</h3>
+                            <Form.Control type="text" placeholder="Example: 3.456 ETH" value={this.state.amount} onChange={this.handleAmountChange}/>
                         </Form.Group>
 
-                        <Button variant="primary" onClick={this.donateEther}>Donate</Button>
+                        <Button variant="primary" onClick={this.donateEther} className="me-2">Donate</Button>
+                        <Button variant="primary" onClick={this.distributeEther}>Distribute Funds</Button>
+
                     </Form>
             //     </div>
             // </div>

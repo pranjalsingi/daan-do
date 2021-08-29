@@ -91,6 +91,14 @@ contract OpenCharity is NGO {
         return intervals[intervals.length - 1].amounts;
     }
     
+    function getTotalIntervals() external view returns (uint){
+        return intervals.length;
+    }
+
+    function getAmountCollectedInInterval(uint i) external view returns (uint){
+        return intervals[i].total_amount;
+    }
+
     function allIntervals() external view returns (Interval[] memory){
         return intervals;
     }
@@ -109,6 +117,7 @@ contract OpenCharity is NGO {
         
         // require a minimum interval time of 5 minutes
         require(block.timestamp - intervalDist.startTime >= 1 minutes, "Minimum 1 minute interval required");
+        require(address(this).balance > 0, "No Donations received yet");
         uint eachCut = address(this).balance/ngos.length;
         // payable(ngos[0]).transfer(address(this).balance);
         for(uint i = 0; i < ngos.length; i++){
