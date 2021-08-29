@@ -1,33 +1,40 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.7;
+pragma solidity ^0.8.0;
 
 contract NGO {
 
     event NGORemittance(address _address, uint amount);
     address[] ngos = [
-        0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2,
-        0xCA35b7d915458EF540aDe6068dFe2F44E8fa733c,
-        0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db
+        0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65,
+        0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc,
+        0x976EA74026E726554dB657fA54763abd0C3a0aa9
     ]; //list of charity addresses (hardcoded)
+
+    uint[] amountReceivedByNGOs = [0, 0, 0];
+
+    function getAmountReceivedByNGOs() external view returns (uint[] memory) {
+        return amountReceivedByNGOs;
+    }
     
     function getNGOs() external view returns (address[] memory) {
         return ngos;
     }
     
-    function depositToNGO(address _address, uint eachCut) internal {
+    function depositToNGO(address _address, uint eachCut, uint _index) internal {
         payable(_address).transfer(eachCut);
+        amountReceivedByNGOs[_index] += eachCut;
         emit NGORemittance(_address, eachCut);
     }
 
 }
 
-contract Charity is NGO {
+contract OpenCharity is NGO {
 
     event newDonor(address _address, uint amount);
     
     struct Interval {
         uint total_amount;
-        
+
         address[] addresses;
         uint[] amounts;
         
@@ -37,6 +44,9 @@ contract Charity is NGO {
     
     Interval[] intervals;
     mapping(address => uint) totalAmountPerAddress;
+
+    address[] addressesDonated;
+    
     
     constructor() {
         Interval memory interval;
@@ -49,6 +59,10 @@ contract Charity is NGO {
         Interval storage intervalDepo = intervals[intervals.length - 1];
         // increase the total amount of interval
         intervalDepo.total_amount += msg.value;
+
+        if(totalAmountPerAddress[msg.sender] == 0) {
+            addressesDonated.push(msg.sender);
+        }
         
         // increase the total amount of the address
         totalAmountPerAddress[msg.sender] += msg.value;
@@ -61,14 +75,30 @@ contract Charity is NGO {
         emit newDonor(msg.sender, msg.value);
     }
     
-    function getDonorAddresses() external view returns (address[] memory){
+    function getDonorAddressesPerInterval() external view returns (address[] memory){
         return intervals[intervals.length - 1].addresses;
+    }
+
+    function getAmountPerAddress(address _address) external view returns (uint) {
+        return totalAmountPerAddress[_address];
+    }
+
+    function getDonorAddresses() external view returns (address[] memory){
+        return addressesDonated;
     }
     
     function getDonorAmounts() external view returns (uint[] memory){
         return intervals[intervals.length - 1].amounts;
     }
     
+    function getTotalIntervals() external view returns (uint){
+        return intervals.length;
+    }
+
+    function getAmountCollectedInInterval(uint i) external view returns (uint){
+        return intervals[i].total_amount;
+    }
+
     function allIntervals() external view returns (Interval[] memory){
         return intervals;
     }
@@ -86,15 +116,16 @@ contract Charity is NGO {
         // return intervalDist.startTime;//
         
         // require a minimum interval time of 5 minutes
-        require(block.timestamp - intervalDist.startTime >= 10 seconds, "Minimum 5 minutes interval required");
+        require(block.timestamp - intervalDist.startTime >= 1 minutes, "Minimum 1 minute interval required");
+        require(address(this).balance > 0, "No Donations received yet");
         uint eachCut = address(this).balance/ngos.length;
         // payable(ngos[0]).transfer(address(this).balance);
         for(uint i = 0; i < ngos.length; i++){
             if (i > (ngos.length - 2)){
-                depositToNGO(ngos[i], address(this).balance);
+                depositToNGO(ngos[i], address(this).balance, i);
             }
             else{
-                depositToNGO(ngos[i], eachCut);
+                depositToNGO(ngos[i], eachCut, i);
             }  
         }
         intervalDist.endTime = block.timestamp;
@@ -108,7 +139,7 @@ contract Charity is NGO {
 
 
 
-// Done - Accept payment from an address to the Charity contract 
+// Done - Accept payment from an address to the OpenCharity contract 
 
 // Done - Smart contract should increase the total balance by the amount received for that interval
 // Done - An event should be fired when someone makes a payment(Front can listen to this event and update the UI accordingly)
